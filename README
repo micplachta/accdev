@@ -1,0 +1,20 @@
+As locks I've only used mutexes:
+ - contexts_lock for context array manipulation
+ - cmd_lock for command submission
+ - ctx->lock for
+ - buf->lock
+
+If a command cannot be submitted it is queued in the driver. It is later sent
+after FENCE_WAIT interrupt. For that reason every 255th command is FENCE_WAIT.
+
+Driver runs a helper kernel thread that does tasks queued by interrupt handler.
+
+The ACCELDEV_CMD_FENCE_WAIT is always set to 0xffffffff and only that 'val' is
+used so that we always receive an interrupt.
+
+The FENCE_WAIT command is used when releasing a data buffer in order to assure
+all work submitted before is done.
+
+Struct representing data buffer stores reference to file representing context
+the buffer belongs to. The reference is put when buffer is released. This
+assuers context is not released before all its data buffers are.
